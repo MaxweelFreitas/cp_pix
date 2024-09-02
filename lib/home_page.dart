@@ -18,31 +18,93 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   String? receiverName;
 
   void _showAlertDialog(String clipboard) {
-    if (Pix.isValidCopyPastPIXCode(clipboard)) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Bem-vindo de volta!'),
-            content: const Text('O aplicativo voltou do background.'),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  final textToPast = await System.pasteFromClipboard();
-                  setState(() {
-                    past.text = textToPast;
-                  });
-                  log('Texto colado: ${past.text})');
-                  if (!context.mounted) return;
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
+    final pixKeyType = Pix.getPixKeyType(clipboard);
+
+    if (pixKeyType == PixKeyType.invalid) return;
+
+    // Mapeia tipos de chave Pix para seus títulos, textos e funções associadas
+    final Map<PixKeyType, Map<String, dynamic>> dialogData = {
+      PixKeyType.cpf: {
+        'title': 'CPF copiado',
+        'text': 'Deseja fazer um PIX com o CPF?',
+        'function': () {
+          log('Fazendo PIX com CPF: $clipboard');
+          // Adicione aqui a lógica específica para CPF
         },
-      );
-    }
+      },
+      PixKeyType.cnpj: {
+        'title': 'CNPJ copiado',
+        'text': 'Deseja fazer um PIX com o CNPJ?',
+        'function': () {
+          log('Fazendo PIX com CNPJ: $clipboard');
+          // Adicione aqui a lógica específica para CNPJ
+        },
+      },
+      PixKeyType.phone: {
+        'title': 'Phone copiado',
+        'text': 'Deseja fazer um PIX com o Phone?',
+        'function': () {
+          log('Fazendo PIX com Phone: $clipboard');
+          // Adicione aqui a lógica específica para Phone
+        },
+      },
+      PixKeyType.email: {
+        'title': 'Email copiado',
+        'text': 'Deseja fazer um PIX com o Email?',
+        'function': () {
+          log('Fazendo PIX com Email: $clipboard');
+          // Adicione aqui a lógica específica para Email
+        },
+      },
+      PixKeyType.copyPast: {
+        'title': 'CPPIx copiado',
+        'text': 'Deseja fazer um PIX com o CPPIx?',
+        'function': () {
+          log('Fazendo PIX com CPPIx: $clipboard');
+          // Adicione aqui a lógica específica para CPPIx
+        },
+      },
+      PixKeyType.random: {
+        'title': 'RandomicKey copiado',
+        'text': 'Deseja fazer um PIX com o RandomicKey?',
+        'function': () {
+          log('Fazendo PIX com RandomicKey: $clipboard');
+          // Adicione aqui a lógica específica para RandomicKey
+        },
+      },
+    };
+
+    final data = dialogData[pixKeyType]!;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(data['title']!),
+          content: Text(data['text']!),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                if (!mounted) return;
+                await Future.microtask(
+                    () => data['function']()); // Executa a função específica
+                setState(() {
+                  receiverName = clipboard;
+                });
+                if (mounted) Navigator.of(context).pop();
+              },
+              child: const Text('Sim'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -100,7 +162,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ElevatedButton(
             child: const Text('Copia'),
             onPressed: () {
-              if (Pix.isValidCopyPastPIXCode(copy.text)) {
+              if (Pix.isValidCopyPast(copy.text)) {
                 System.copyToClipboard(copy.text);
                 log('Texto copiado: ${copy.text}');
               } else {
@@ -112,7 +174,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ElevatedButton(
             child: const Text('Cola'),
             onPressed: () async {
-              if (Pix.isValidCopyPastPIXCode(copy.text)) {
+              if (Pix.isValidCopyPast(copy.text)) {
                 final textToPast = await System.pasteFromClipboard();
                 setState(() {
                   past.text = textToPast;

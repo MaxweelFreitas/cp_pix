@@ -1,3 +1,5 @@
+enum PixKeyType { cpf, cnpj, phone, email, random, copyPast, invalid }
+
 class Pix {
   static bool isValidCPF(String cpf) {
     // Remove caracteres não numéricos
@@ -61,29 +63,37 @@ class Pix {
       return false;
     }
 
-    // Função auxiliar para calcular o dígito verificador
-    int calculateVerifier(List<int> digits, int length) {
-      int sum = 0;
-      int weight = length;
-      for (int i = 0; i < length; i++) {
-        sum += digits[i] * weight--;
-        if (weight < 2) weight = 9;
-      }
-      int remainder = sum % 11;
-      return remainder < 2 ? 0 : 11 - remainder;
-    }
-
     // Converte os dígitos em uma lista
     List<int> digits = cnpj.split('').map(int.parse).toList();
 
+    // Pesos para os dígitos verificadores
+    List<int> weightsFirstVerifier = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    List<int> weightsSecondVerifier = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+    int calculateVerifier(List<int> digits, List<int> weights) {
+      int sum = 0;
+
+      // Multiplica cada dígito pelo peso correspondente e soma
+      for (int i = 0; i < digits.length; i++) {
+        sum += digits[i] * weights[i];
+      }
+
+      int remainder = sum % 11;
+
+      // O dígito verificador é 0 se o resto da divisão for menor que 2, senão é 11 menos o resto
+      return remainder < 2 ? 0 : 11 - remainder;
+    }
+
     // Calcula o primeiro dígito verificador
-    int firstVerifier = calculateVerifier(digits.sublist(0, 12), 12);
+    int firstVerifier =
+        calculateVerifier(digits.sublist(0, 12), weightsFirstVerifier);
     if (firstVerifier != digits[12]) {
       return false;
     }
 
     // Calcula o segundo dígito verificador
-    int secondVerifier = calculateVerifier(digits.sublist(0, 13), 13);
+    int secondVerifier =
+        calculateVerifier(digits.sublist(0, 13), weightsSecondVerifier);
     if (secondVerifier != digits[13]) {
       return false;
     }
@@ -91,16 +101,16 @@ class Pix {
     return true;
   }
 
-  /// Valida um número de telefone para ser usado como chave Pix.
+  /// Valida um número de celular para ser usado como chave Pix.
   ///
   /// Este método verifica se o número fornecido segue os padrões de
-  /// um número de telefone válido para registro como chave Pix.
+  /// um número de celular válido para registro como chave Pix.
   /// Ele aceita números nos formatos internacional e nacional.
   ///
   /// Formatos aceitos:
-  /// - Internacional: +55 seguido de 10-11 dígitos.
+  /// - Internacional: +55 seguido de 11 dígitos, começando com 9.
   ///   - Exemplo válido: `+5511998765432`
-  /// - Nacional: Código de área (DDD) seguido de 8-9 dígitos.
+  /// - Nacional: Código de área (DDD) seguido de 9 dígitos, começando com 9.
   ///   - Exemplo válido: `11998765432`
   ///
   /// Retorna:
@@ -109,21 +119,17 @@ class Pix {
   ///
   /// Exemplos:
   /// ```dart
-  /// bool isValid1 = isValidPixPhoneNumber('+5511998765432'); // true
-  /// bool isValid2 = isValidPixPhoneNumber('11998765432'); // true
-  /// bool isValid3 = isValidPixPhoneNumber('011998765432'); // false
+  /// bool isValid1 = isValidPhone('+5511998765432'); // true
+  /// bool isValid2 = isValidPhone('11998765432'); // true
+  /// bool isValid3 = isValidPhone('1198765432'); // false
+  /// bool isValid4 = isValidPhone('+553199876543'); // false
   /// ```
-  static bool isValidPixPhoneNumber(String phoneNumber) {
-    // Regex para formato internacional (+55 seguido de 10-11 dígitos)
-    final regexInternational = RegExp(r'^\+55\d{10,11}$');
+  static bool isValidPhone(String phoneNumber) {
+    // Regex para formato internacional (+55 seguido de 11 dígitos, começando com 9)
+    final regexInternational = RegExp(r'^\+55(9\d{10})$');
 
-    // Regex para formato nacional (sem o +55, mas com DDD e 8-9 dígitos)
-    final regexNational = RegExp(r'^\d{10,11}$');
-
-    // Verificação de comprimento
-    if (phoneNumber.length < 10 || phoneNumber.length > 13) {
-      return false;
-    }
+    // Regex para formato nacional (DDD seguido de 9 dígitos, começando com 9)
+    final regexNational = RegExp(r'^\d{2}9\d{8}$');
 
     // Verificação do formato internacional
     if (phoneNumber.startsWith('+55')) {
@@ -133,12 +139,12 @@ class Pix {
     }
     // Verificação do formato nacional
     else if (regexNational.hasMatch(phoneNumber)) {
-      // Validação adicional para o código de área (DDD)
+      // Validação adicional para o código de área (DDD) e número de celular
       final ddd = phoneNumber.substring(0, 2);
       final phoneDigits = phoneNumber.substring(2);
       if (ddd.startsWith('0') ||
-          phoneDigits.length < 8 ||
-          phoneDigits.length > 9) {
+          phoneDigits.length != 9 ||
+          !phoneDigits.startsWith('9')) {
         return false;
       }
     }
@@ -166,36 +172,8 @@ class Pix {
   ///
   /// [email] é uma string contendo o endereço de email para validação.
   static bool isValidEmail(String email) {
-    // Parte da expressão regular para a parte local (local part) do email
-    String localPart = r"[a-zA-Z0-9!#$%&\'*+/=?^_`{|}~-]+";
-    String localPartSub = r"(?:\.[a-zA-Z0-9!#$%&\'*+/=?^_`{|}~-]+)*";
-
-    // Parte da expressão regular para a parte local do email entre aspas
-    String quotedLocalPart =
-        r'"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*"';
-
-    // Parte da expressão regular para o domínio do email
-    String domainName = r'[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?';
-    String domain = r'(?:\.' + domainName + r')+';
-
-    // Parte da expressão regular para o endereço IP ou domínio literal
-    String ipAddress =
-        r'(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)';
-    String domainLiteral = r'\[(?:(?:' +
-        ipAddress +
-        r'|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\\])';
-
-    // Expressão regular final combinando a parte local e o domínio
-    String emailRegex = r'^(' +
-        localPart +
-        localPartSub +
-        r'|' +
-        quotedLocalPart +
-        r')@(' +
-        domain +
-        r'|' +
-        domainLiteral +
-        r')$';
+    String emailRegex =
+        r'^(?!.*\.\.)(?!.*\.$)(?!^\.)[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
 
     // Criação da RegExp com a expressão regular e configuração para não diferenciação de maiúsculas e minúsculas
     RegExp emailPattern = RegExp(
@@ -241,7 +219,7 @@ class Pix {
   static bool isValidRandomPIXKey(String code) {
     // Define o padrão para a chave Pix aleatória
     final RegExp pattern = RegExp(
-      r'^[A-Za-z0-9-_]{1,36}$',
+      r'^[A-Za-z0-9_-]{1,36}$',
       caseSensitive: false,
     );
 
@@ -263,11 +241,11 @@ class Pix {
   ///
   /// Exemplo de uso:
   /// ```dart
-  /// bool isValid = isValidCopyPastPIXCode('000201...BR.GOV.BCB.PIX...6304ABCD'); // true ou false
+  /// bool isValid = isValidCopyPast('000201...BR.GOV.BCB.PIX...6304ABCD'); // true ou false
   /// ```
   ///
   /// [codigo] é uma string contendo o código Pix para validação.
-  static bool isValidCopyPastPIXCode(String codigo) {
+  static bool isValidCopyPast(String codigo) {
     // O código Pix deve ter pelo menos 40 caracteres (geralmente é bem maior).
     if (codigo.length < 40) return false;
 
@@ -330,5 +308,22 @@ class Pix {
 
     // Retorna null se o nome não puder ser extraído.
     return null;
+  }
+
+  static PixKeyType getPixKeyType(String key) {
+    if (Pix.isValidCPF(key)) {
+      return PixKeyType.cpf;
+    } else if (Pix.isValidCNPJ(key)) {
+      return PixKeyType.cnpj;
+    } else if (Pix.isValidPhone(key)) {
+      return PixKeyType.phone;
+    } else if (Pix.isValidEmail(key)) {
+      return PixKeyType.email;
+    } else if (Pix.isValidCopyPast(key)) {
+      return PixKeyType.copyPast;
+    } else if (Pix.isValidRandomPIXKey(key)) {
+      return PixKeyType.random;
+    }
+    return PixKeyType.invalid;
   }
 }
