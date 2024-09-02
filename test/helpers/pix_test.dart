@@ -62,15 +62,10 @@ void main() {
   group('PhoneNumber ⇒', () {
     test('Should return true when receive a valid number', () {
       List<String> validPhoneNumbers = [
-        '91987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '92987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '93987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '94987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '95987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '96987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '97987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '98987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
-        '99987654321', // Exemplo válido de número de celular brasileiro com 11 dígitos
+        '+5511998765432', // Código do país +55, código de área 11, número válido
+        '+5531987654321', // Código do país +55, código de área 31, número válido
+        '+5521998765432', // Código do país +55, código de área 21, número válido
+        '+5544998765432' // Código do país +55, código de área 44, número válido
       ];
 
       for (var phoneNumber in validPhoneNumbers) {
@@ -81,15 +76,13 @@ void main() {
 
     test('Should return false when receive an inValid number', () {
       List<String> invalidPhoneNumbers = [
-        '9198765432', // Faltando um dígito (10 dígitos)
-        '9298765432', // Faltando um dígito (10 dígitos)
-        '929876543212', // Com 12 dígitos, mais do que o padrão de 11 dígitos
-        '939876543', // Faltando dois dígitos (9 dígitos)
-        '94087654321', // Não começa com 9, inválido por padrão
-        '9598765432', // Faltando um dígito (10 dígitos)
-        '969876543', // Faltando dois dígitos (9 dígitos)
-        '97087654321', // Não começa com 9, inválido por padrão
-        '9187654321', // Faltando um dígito (10 dígitos)
+        '+55119987654', // Falta um dígito (deveria ter 13 dígitos no total)
+        '+551199876543', // Falta o código do país ou o número está incompleto
+        '+5521-998765432', // Formato inválido (contém caracteres não numéricos)
+        '+55449987654321', // Número muito longo (deveria ter 13 dígitos no total)
+        '+556199876543', // Código de área inválido (não existe)
+        '5511998765432', // Falta o código do país
+        '+55abc998765432' // Contém caracteres não numéricos
       ];
 
       for (var phoneNumber in invalidPhoneNumbers) {

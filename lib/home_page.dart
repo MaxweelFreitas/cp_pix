@@ -18,7 +18,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   String? receiverName;
 
   void _showAlertDialog(String clipboard) {
-    final pixKeyType = Pix.getPixKeyType(clipboard);
+    final pixKeyType = Pix.getPixKeyType(clipboard.trim());
 
     if (pixKeyType == PixKeyType.invalid) return;
 
@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         'title': 'CPF copiado',
         'text': 'Deseja fazer um PIX com o CPF?',
         'function': () {
-          log('Fazendo PIX com CPF: $clipboard');
+          log('Fazendo PIX com CPF: ${clipboard.trim()}');
           // Adicione aqui a lógica específica para CPF
         },
       },
@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         'title': 'CNPJ copiado',
         'text': 'Deseja fazer um PIX com o CNPJ?',
         'function': () {
-          log('Fazendo PIX com CNPJ: $clipboard');
+          log('Fazendo PIX com CNPJ: ${clipboard.trim()}');
           // Adicione aqui a lógica específica para CNPJ
         },
       },
@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         'title': 'Phone copiado',
         'text': 'Deseja fazer um PIX com o Phone?',
         'function': () {
-          log('Fazendo PIX com Phone: $clipboard');
+          log('Fazendo PIX com Phone: ${clipboard.trim()}');
           // Adicione aqui a lógica específica para Phone
         },
       },
@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         'title': 'Email copiado',
         'text': 'Deseja fazer um PIX com o Email?',
         'function': () {
-          log('Fazendo PIX com Email: $clipboard');
+          log('Fazendo PIX com Email: ${clipboard.trim()}');
           // Adicione aqui a lógica específica para Email
         },
       },
@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         'title': 'CPPIx copiado',
         'text': 'Deseja fazer um PIX com o CPPIx?',
         'function': () {
-          log('Fazendo PIX com CPPIx: $clipboard');
+          log('Fazendo PIX com CPPIx: ${clipboard.trim()}');
           // Adicione aqui a lógica específica para CPPIx
         },
       },
@@ -68,7 +68,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         'title': 'RandomicKey copiado',
         'text': 'Deseja fazer um PIX com o RandomicKey?',
         'function': () {
-          log('Fazendo PIX com RandomicKey: $clipboard');
+          log('Fazendo PIX com RandomicKey: ${clipboard.trim()}');
           // Adicione aqui a lógica específica para RandomicKey
         },
       },

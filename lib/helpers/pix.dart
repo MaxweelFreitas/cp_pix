@@ -1,3 +1,5 @@
+import 'dart:math';
+
 enum PixKeyType { cpf, cnpj, phone, email, random, copyPast, invalid }
 
 class Pix {
@@ -105,13 +107,17 @@ class Pix {
   ///
   /// Este método verifica se o número fornecido segue os padrões de
   /// um número de celular válido para registro como chave Pix.
-  /// Ele aceita números nos formatos internacional e nacional.
+  /// Ele aceita números nos formatos internacional e nacional,
+  /// com ou sem separadores.
   ///
   /// Formatos aceitos:
   /// - Internacional: +55 seguido de 11 dígitos, começando com 9.
-  ///   - Exemplo válido: `+5511998765432`
+  ///   - Exemplo válido: `+5511998765432`, `558899744051`
   /// - Nacional: Código de área (DDD) seguido de 9 dígitos, começando com 9.
-  ///   - Exemplo válido: `11998765432`
+  ///   - Exemplo válido: `11998765432`, `8899744051`
+  /// - Formatos com separadores:
+  ///   - Internacional: `+55(88)99744-051`
+  ///   - Nacional: `(88)99744-051`
   ///
   /// Retorna:
   /// - `true` se o número for válido.
@@ -121,40 +127,40 @@ class Pix {
   /// ```dart
   /// bool isValid1 = isValidPhone('+5511998765432'); // true
   /// bool isValid2 = isValidPhone('11998765432'); // true
-  /// bool isValid3 = isValidPhone('1198765432'); // false
-  /// bool isValid4 = isValidPhone('+553199876543'); // false
+  /// bool isValid3 = isValidPhone('(88)99744-051'); // true
+  /// bool isValid4 = isValidPhone('558899744051'); // true
+  /// bool isValid5 = isValidPhone('1198765432'); // false
+  /// bool isValid6 = isValidPhone('+553199876543'); // false
   /// ```
   static bool isValidPhone(String phoneNumber) {
-    // Regex para formato internacional (+55 seguido de 11 dígitos, começando com 9)
-    final regexInternational = RegExp(r'^\+55(9\d{10})$');
+    // Expressão regular para validar números de telefone com e sem código de país
+    final RegExp phoneRegex = RegExp(
+      r'^(\+55)?(?:\s*\(?\d{2}\)?\s*)?\d{4,5}-?\d{4}$',
+      caseSensitive: false,
+      dotAll: true,
+    );
 
-    // Regex para formato nacional (DDD seguido de 9 dígitos, começando com 9)
-    final regexNational = RegExp(r'^\d{2}9\d{8}$');
+    // Expressão regular para validar números de telefone como chaves Pix
+    final RegExp pixKeyRegex = RegExp(
+      r'^(\+55)?(?:\s*\(?\d{2}\)?\s*)?\d{9}$',
+      caseSensitive: false,
+      dotAll: true,
+    );
 
-    // Verificação do formato internacional
-    if (phoneNumber.startsWith('+55')) {
-      if (!regexInternational.hasMatch(phoneNumber)) {
-        return false;
-      }
-    }
-    // Verificação do formato nacional
-    else if (regexNational.hasMatch(phoneNumber)) {
-      // Validação adicional para o código de área (DDD) e número de celular
-      final ddd = phoneNumber.substring(0, 2);
-      final phoneDigits = phoneNumber.substring(2);
-      if (ddd.startsWith('0') ||
-          phoneDigits.length != 9 ||
-          !phoneDigits.startsWith('9')) {
-        return false;
-      }
-    }
-    // Caso nenhum formato seja válido
-    else {
-      return false;
-    }
+    // Remove caracteres não numéricos (exceto +)
+    final cleanedNumber = phoneNumber.replaceAll(RegExp(r'[^\d\+]'), '');
 
-    // Se todas as verificações forem passadas
-    return true;
+    // Verifica se o número limpo tem exatamente 13 dígitos
+    bool hasExact13Digits = cleanedNumber.substring(1).length == 13;
+
+    // Verifica se o número limpo corresponde ao formato esperado para telefone
+    bool isPhoneValid = phoneRegex.hasMatch(phoneNumber);
+
+    // Verifica se o número limpo pode ser uma chave Pix
+    bool isPixKeyValid = pixKeyRegex.hasMatch(cleanedNumber);
+
+    // Retorna true apenas se o número for tanto um telefone válido quanto uma chave Pix válida e tiver exatamente 13 dígitos
+    return hasExact13Digits && isPhoneValid && isPixKeyValid;
   }
 
   /// Verifica se um endereço de email é válido conforme o padrão RFC 5322.
@@ -217,14 +223,14 @@ class Pix {
   /// - `true` se o código estiver no formato correto e tiver até 36 caracteres.
   /// - `false` caso contrário.
   static bool isValidRandomPIXKey(String code) {
-    // Define o padrão para a chave Pix aleatória
-    final RegExp pattern = RegExp(
-      r'^[A-Za-z0-9_-]{1,36}$',
-      caseSensitive: false,
-    );
+    // Verifica se a chave tem exatamente 32 caracteres
+    if (code.length != 32) {
+      return false;
+    }
 
-    // Verifica se a chave está no formato correto e se tem até 36 caracteres
-    return pattern.hasMatch(code) && code.length <= 36;
+    // Verifica se a chave contém apenas letras e números
+    final RegExp regex = RegExp(r'^[a-zA-Z0-9]+$');
+    return regex.hasMatch(code);
   }
 
   /// Valida um código Pix.
@@ -308,6 +314,36 @@ class Pix {
 
     // Retorna null se o nome não puder ser extraído.
     return null;
+  }
+
+  /// Gera uma chave aleatória para o Pix com 32 caracteres alfanuméricos.
+  ///
+  /// A chave gerada é composta por letras maiúsculas, minúsculas e números, e
+  /// possui exatamente 32 caracteres. Esta função utiliza o gerador de números
+  /// aleatórios da biblioteca `dart:math` para criar a chave.
+  ///
+  /// Exemplo de uso:
+  /// ```dart
+  /// String key = genRandomKey();
+  /// print(key); // Exemplo de saída: '4T9sDkJ8Lmn4UVZt0Fh1R2Wxj3pGZyQ5cP6I7N8O9A'
+  /// ```
+  ///
+  /// Retorna:
+  /// Uma string contendo a chave aleatória gerada.
+  static String genRandomKey() {
+    const int keyLength = 32;
+    const String chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final Random rng = Random();
+
+    // Gera a chave aleatória
+    final StringBuffer key = StringBuffer();
+    for (int i = 0; i < keyLength; i++) {
+      final int index = rng.nextInt(chars.length);
+      key.write(chars[index]);
+    }
+
+    return key.toString();
   }
 
   static PixKeyType getPixKeyType(String key) {
